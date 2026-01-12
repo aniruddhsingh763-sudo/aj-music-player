@@ -3,154 +3,145 @@ import yt_dlp
 import random
 import logging
 
-# 1. Backend Clean-up: Saari warnings mute kar di hain
+# Sabhi technical warnings block kar di hain
 logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.ERROR)
 
-# 2. Page Setup
-st.set_page_config(page_title="Aj Beats", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Aj Beats Studio", layout="wide", initial_sidebar_state="collapsed")
 
-# 3. Premium CSS (Image Style)
+# 🎨 UNIVERSAL UI: Neon Circuit & Responsive Design
 st.markdown("""
     <style>
-    .stApp { background: #0c0c0c; color: white; }
+    .stApp { 
+        background-color: #0b0b15;
+        background-image: 
+            radial-gradient(circle at 10% 20%, rgba(0, 255, 127, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 40%),
+            linear-gradient(rgba(0, 255, 127, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 127, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px;
+        color: white; 
+    }
     
-    /* Search Bar at Top */
+    /* Search Bar - Top Position */
     .stTextInput > div > div > input {
-        background-color: #1a1a1a !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         color: white !important;
-        border-radius: 20px !important;
-        border: 1px solid #1DB954 !important;
-        padding: 12px 20px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 255, 127, 0.4) !important;
+        padding: 12px !important;
     }
 
-    /* Mood Buttons - Large & 3D */
+    /* Mood Buttons - Large & Neon Glow */
     div.stButton > button {
-        background: rgba(255, 255, 255, 0.05) !important;
-        color: #1DB954 !important;
-        border: 1px solid #333 !important;
+        background: rgba(15, 15, 25, 0.8) !important;
+        color: white !important;
+        border: 1px solid rgba(138, 43, 226, 0.4) !important;
         border-radius: 15px !important;
-        font-weight: bold !important;
-        font-size: 18px !important;
-        height: 90px !important;
+        font-weight: 800 !important;
+        height: 75px !important;
         width: 100% !important;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.6) !important;
+        transition: 0.3s;
+        border-bottom: 4px solid #00ff7f !important;
     }
     div.stButton > button:hover {
-        background: #1DB954 !important;
-        color: black !important;
-        box-shadow: 0 0 25px #1DB954;
+        border-color: #00ff7f !important;
+        box-shadow: 0 0 20px rgba(0, 255, 127, 0.5) !important;
+        transform: translateY(-3px);
     }
 
-    /* Glass Cards */
+    /* Glass Song Cards */
     .song-card { 
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.04);
         backdrop-filter: blur(10px);
         padding: 15px; 
         border-radius: 18px; 
-        border-left: 5px solid #1DB954;
-        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
         gap: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
     
-    .section-header { 
-        font-size: 24px; 
-        font-weight: bold; 
-        margin: 25px 0 10px 0; 
-        border-left: 6px solid #1DB954;
+    .neon-label { 
+        color: #00ff7f; 
+        font-weight: 900; 
+        font-size: 20px; 
+        text-transform: uppercase;
+        border-left: 6px solid #00ff7f;
         padding-left: 12px;
+        margin: 25px 0 15px 0;
     }
 
-    audio { width: 100%; filter: invert(100%) hue-rotate(90deg) brightness(1.7); }
+    audio { width: 100%; filter: invert(100%) hue-rotate(85deg) brightness(1.7); }
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# Session Memory
-if 'playlist' not in st.session_state:
-    st.session_state['playlist'] = []
-if 'last_fetched' not in st.session_state:
-    st.session_state['last_fetched'] = ""
+# Session State for History & Playlist
+if 'u_playlist' not in st.session_state: st.session_state['u_playlist'] = []
+if 'u_last_q' not in st.session_state: st.session_state['u_last_q'] = ""
 
-# --- 1. SEARCH BAR (TOP) ---
-col_logo, col_name = st.columns([1, 4])
-with col_logo:
-    st.markdown('<img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" style="width:75px; border-radius:50%; border:2px solid #1DB954; box-shadow: 0 0 15px #1DB954;">', unsafe_allow_html=True)
-with col_name:
-    st.markdown("<h2 style='margin:0; color:#1DB954;'>AJ BEATS</h2><p style='color:#777; margin:0;'>The Music Studio</p>", unsafe_allow_html=True)
+# --- 1. HEADER & TOP SEARCH ---
+h_col1, h_col2 = st.columns([1, 4])
+with h_col1:
+    st.markdown('<img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" style="width:80px; height:80px; border-radius:50%; border:3px solid #00ff7f; box-shadow: 0 0 15px #00ff7f; object-fit: cover;">', unsafe_allow_html=True)
+with h_col2:
+    st.markdown("<h1 style='margin:0;'>AJ BEATS</h1><small style='color:#00ff7f; letter-spacing:2px;'>UNIVERSAL STUDIO</small>", unsafe_allow_html=True)
 
 st.write("")
-user_search = st.text_input(label="Search", placeholder="🔍 Search Singer, Song or Playlist...", label_visibility="collapsed")
+user_search = st.text_input(label="Search", placeholder="🔍 Search songs, artists or playlists...", label_visibility="collapsed")
 
-# --- 2. CATEGORIES (BADE BUTTONS) ---
-st.markdown("<div class='section-header'>🔥 Explore Moods</div>", unsafe_allow_html=True)
-m1, m2, m3 = st.columns(3)
-m4, m5, m6 = st.columns(3)
+# --- 2. DISCOVER MOODS (Responsive Grid) ---
+st.markdown("<div class='neon-label'>DISCOVER SOUNDSPHERES 🔥</div>", unsafe_allow_html=True)
 mood = ""
 
-# Fixed Python Syntax Indentation
-with m1:
-    if st.button("🚜 Haryanvi Hits"):
-        mood = "Latest Haryanvi Songs 2026"
-with m2:
-    if st.button("🕺 Punjabi Beats"):
-        mood = "Top Punjabi Songs 2026"
-with m3:
-    if st.button("📻 Old Gold Hits"):
-        mood = "90s Bollywood Evergreen"
-with m4:
-    if st.button("💔 Sad Vibes"):
-        mood = "Arijit Singh Sad Collection"
-with m5:
-    if st.button("🥳 Party Mix"):
-        mood = "Latest Bollywood Dance Hits"
-with m6:
-    if st.button("🧘 Chill Lofi"):
-        mood = "Hindi Lofi Chill Mix"
+# PC par 3 columns, Phone par automatically adjust hoga
+m_col1, m_col2, m_col3 = st.columns(3)
+with m_col1:
+    if st.button("🚜 HARYANI TECHAN"): mood = "Latest Haryanvi Songs 2026"
+    if st.button("💔 SAD SHADOWS"): mood = "Arijit Singh Sad 2026"
+with m_col2:
+    if st.button("🕺 PUNJABI BEATS"): mood = "Top Punjabi Songs 2026"
+    if st.button("🥳 PARTY HITS"): mood = "New Bollywood Dance 2026"
+with m_col3:
+    if st.button("📻 OLD GOLD HITS"): mood = "90s Bollywood Evergreen"
+    if st.button("🧘 CHILL VIBES"): mood = "Hindi Lofi Mashup"
 
-# Query Logic
-final_query = user_search if user_search else (mood if mood else "Top Bollywood Hits 2026")
+# Final query logic
+final_query = user_search if user_search else (mood if mood else "Trending Bollywood 2026")
 
-# --- 3. CONTROLS ---
+# --- 3. PLAYER CONTROLS ---
 st.write("---")
 c1, c2, c3 = st.columns([2, 1, 1])
 with c1:
-    st.markdown(f"#### 🎧 Now Playing: `{final_query}`")
+    st.markdown(f"#### 🎧 ACTIVE: `{final_query}`")
 with c2:
-    shuffle = st.toggle("🔀 Suffer Mode")
+    shuffle = st.toggle("🔀 SHUFFLE")
 with c3:
-    auto_loop = st.toggle("🔁 Auto Loop", value=True)
+    auto_loop = st.toggle("🔁 AUTO-LOOP", value=True)
 
-# --- 4. ENGINE ---
-ydl_opts = {
-    'format': 'bestaudio/best',
-    'quiet': True,
-    'no_warnings': True,
-    'ignoreerrors': True,
-    'default_search': 'ytsearch15',
-    'noplaylist': True
-}
+# --- 4. ENGINE (PC + PHONE OPTIMIZED) ---
+ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'no_warnings': True, 'ignoreerrors': True, 'default_search': 'ytsearch15', 'noplaylist': True}
 
 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
     try:
-        if final_query != st.session_state['last_fetched']:
-            with st.spinner('Preparing Studio...'):
+        if final_query != st.session_state['u_last_q']:
+            with st.spinner('SYNCING STUDIO...'):
                 data = ydl.extract_info(final_query, download=False)
-                st.session_state['playlist'] = [e for e in data['entries'] if e is not None]
-                st.session_state['last_fetched'] = final_query
+                st.session_state['u_playlist'] = [e for e in data['entries'] if e is not None]
+                st.session_state['u_last_q'] = final_query
 
-        display_list = list(st.session_state['playlist'])
-        if shuffle:
-            random.shuffle(display_list)
+        current_songs = list(st.session_state['u_playlist'])
+        if shuffle: random.shuffle(current_songs)
 
-        for song in display_list:
+        for song in current_songs:
             st.markdown(f"""
                 <div class="song-card">
-                    <img src="{song.get('thumbnail')}" style="width:65px; height:65px; border-radius:12px; object-fit:cover; border: 1px solid #1DB954;">
-                    <div>
-                        <b style="font-size:16px;">{song.get('title')[:60]}</b><br>
-                        <small style="color:#1DB954;">{song.get('uploader')}</small>
+                    <img src="{song.get('thumbnail')}" style="width:70px; height:70px; border-radius:12px; border:1px solid #00ff7f; object-fit:cover;">
+                    <div style="flex-grow:1;">
+                        <b style="font-size:16px; color:#fff;">{song.get('title')[:60]}</b><br>
+                        <small style="color:#00ff7f;">{song.get('uploader')}</small>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -159,6 +150,4 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
     except Exception:
         st.error("Studio Sync Error! Refresh please.")
 
-st.markdown("<br><center><p style='color:#444; font-size:12px;'>AJ BEATS v8.0 • Developed by Aj</p></center>", unsafe_allow_html=True)
-
-    
+st.markdown("<br><center><p style='color:#333; font-size:12px;'>AJ BEATS v15.0 • NO ADS • High Quality</p></center>", unsafe_allow_html=True)
