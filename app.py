@@ -3,181 +3,155 @@ import yt_dlp
 import random
 import logging
 
-# 1. Background Warnings block
+# Warnings block karne ke liye
 logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.ERROR)
 
-st.set_page_config(page_title="Aj Beats", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Aj Pro Player", layout="wide", initial_sidebar_state="collapsed")
 
-# 🎨 DITTO IMAGE STYLE: Circuit Lines & Neon Glow CSS
+# 🎨 ADVANCED UI DESIGN (Glassmorphism & Gradients)
 st.markdown("""
     <style>
-    /* Dark Theme with Neon Circuit Background (Exactly like your image) */
+    /* Background with Subtle Gradient */
     .stApp { 
-        background-color: #0b0b15;
-        background-image: 
-            radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(0, 255, 127, 0.1) 0%, transparent 50%),
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
-        color: #ffffff;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        color: white; 
     }
     
-    /* Search Bar - Top Premium Look */
-    .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.07) !important;
-        color: white !important;
-        border-radius: 8px !important;
-        border: 2px solid rgba(255, 255, 255, 0.2) !important;
-        padding: 12px !important;
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+    /* Profile Photo with Advanced Glow */
+    .profile-container {
+        text-align: center;
+        padding: 20px;
     }
-    .stTextInput > div > div > input:focus {
-        border-color: #1DB954 !important;
-        box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+    .profile-img { 
+        border-radius: 50%; 
+        width: 120px; height: 120px; 
+        border: 4px solid #1DB954;
+        box-shadow: 0 0 25px rgba(29, 185, 84, 0.6);
+        transition: 0.4s;
     }
+    .profile-img:hover { transform: scale(1.05); }
 
-    /* Mood Buttons - Neon Border Style (Ditto Image) */
+    /* Premium Buttons with Icons */
     div.stButton > button {
-        background: rgba(20, 20, 35, 0.7) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(138, 43, 226, 0.5) !important; /* Purple Glow */
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        height: 65px !important;
-        width: 100% !important;
-        transition: 0.4s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #1DB954 !important;
+        border: 1px solid #1DB954 !important;
+        border-radius: 15px !important;
+        font-weight: bold !important;
+        transition: 0.3s !important;
+        height: 50px !important;
     }
     div.stButton > button:hover {
-        border-color: #00ff7f !important; /* Green Neon Glow on Hover */
-        box-shadow: 0 0 20px rgba(0, 255, 127, 0.4) !important;
-        background: rgba(0, 255, 127, 0.1) !important;
-        transform: translateY(-2px);
+        background: #1DB954 !important;
+        color: black !important;
+        box-shadow: 0 0 15px #1DB954;
     }
 
-    /* Glass Cards for Song List */
+    /* Modern Song Cards */
     .song-card { 
-        background: rgba(255, 255, 255, 0.04);
-        backdrop-filter: blur(12px);
-        padding: 18px; 
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        padding: 15px; 
         border-radius: 15px; 
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        margin-top: 15px;
     }
     
-    /* Neon Header Labels */
-    .neon-label { 
-        color: #00ff7f; 
-        font-weight: 800; 
-        font-size: 18px;
-        text-transform: uppercase; 
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .neon-label::before {
-        content: "";
-        width: 4px;
-        height: 20px;
-        background: #00ff7f;
-        display: inline-block;
-        box-shadow: 0 0 10px #00ff7f;
+    /* Neon Green Audio Player */
+    audio { 
+        width: 100%; 
+        filter: invert(100%) hue-rotate(90deg) brightness(1.8); 
+        margin-top: 10px; 
     }
 
-    audio { width: 100%; filter: invert(100%) hue-rotate(90deg) brightness(1.8); margin-top: 10px; }
+    .section-title { 
+        color: #ffffff; 
+        font-size: 22px; 
+        margin-top: 30px; 
+        font-weight: 800; 
+        letter-spacing: 1px;
+    }
+    
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# Session Memory
-if 'playlist' not in st.session_state: st.session_state['playlist'] = []
-if 'last_fetched' not in st.session_state: st.session_state['last_fetched'] = ""
+# --- Memory ---
+if 'playlist' not in st.session_state:
+    st.session_state['playlist'] = []
+    st.session_state['query_text'] = "Top Bollywood Hits 2026"
 
-# --- 1. HEADER (Ditto Image Profile) ---
-t_col1, t_col2 = st.columns([1, 4])
-with t_col1:
-    st.markdown('<img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" style="width:70px; height:70px; border-radius:50%; border:3px solid #00ff7f; box-shadow: 0 0 15px rgba(0, 255, 127, 0.5); object-fit: cover;">', unsafe_allow_html=True)
-with t_col2:
-    st.markdown("<h1 style='margin:0; color:#ffffff; font-weight:900; letter-spacing:1px;'>AJ BEATS</h1><small style='color:#00ff7f;'>DISCOVER SOUNDSPHERES</small>", unsafe_allow_html=True)
+# --- Header ---
+st.markdown(f"""
+    <div class="profile-container">
+        <img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" class="profile-img">
+        <h1 style="color:#1DB954; font-family: 'Arial Black'; margin-top:15px;">AJ PRO PLAYER</h1>
+        <p style="color:#888;">Your Private Ad-Free Music Studio</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- 2. SEARCH BAR (Top Position) ---
-st.write("")
-user_search = st.text_input(label="Search", placeholder="🔍 Search songs or artists...", label_visibility="collapsed")
+# --- Search ---
+user_search = st.text_input(label="Search", placeholder="🚀 Type song name or singer...", label_visibility="collapsed")
 
-# --- 3. DISCOVER MOODS (Ditto Image Buttons) ---
-st.markdown("<div class='neon-label'>DISCOVER SOUNDSPHERES 🔥</div>", unsafe_allow_html=True)
-m1, m2 = st.columns(2)
-m3, m4 = st.columns(2)
-m5, m6 = st.columns(2)
+# --- Premium Categories ---
+st.markdown("<div class='section-title'>💎 DISCOVER MOODS</div>", unsafe_allow_html=True)
+c1, c2, c3 = st.columns(3)
+c4, c5, c6 = st.columns(3)
 mood = ""
 
-with m1:
-    if st.button("🚜 HARYANI TECHAN"):
-        mood = "Latest Haryanvi Songs 2026"
-with m2:
-    if st.button("📻 OLD GOLD HITS"):
-        mood = "90s Bollywood Evergreen"
-with m3:
-    if st.button("🕺 PUNJABI BEATS"):
-        mood = "Top Punjabi Songs 2026"
-with m4:
-    if st.button("🌌 NEON PUNJABI"):
-        mood = "New Punjabi Remix 2026"
-with m5:
-    if st.button("💔 SAD SHADOWS"):
-        mood = "Arijit Singh Sad Collection"
-with m6:
-    if st.button("🧘 CHILL VIBES"):
-        mood = "Hindi Lofi Chill Mix"
+with c1: if st.button("🚜 HARYANVI"): mood = "New Haryanvi Songs 2026"
+with c2: if st.button("🕺 PUNJABI"): mood = "Top Punjabi Beats 2026"
+with c3: if st.button("📻 OLD GOLD"): mood = "90s Bollywood Hits"
+with c4: if st.button("💔 SAD VIBES"): mood = "Arijit Singh Sad Mix"
+with c5: if st.button("🥳 PARTY HITS"): mood = "Latest Dance Songs 2026"
+with c6: if st.button("🧘 CHILL LOFI"): mood = "Hindi Lofi Mix 2026"
 
-# Final Query Logic
-final_query = user_search if user_search else (mood if mood else "Top Bollywood Hits 2026")
+active_query = user_search if user_search else (mood if mood else st.session_state['query_text'])
 
-# --- 4. PLAYER CONTROLS (Auto-Loop ditto like image) ---
+# --- Player Section ---
 st.write("---")
-ctrl1, ctrl2, ctrl3 = st.columns([2, 1, 1])
-with ctrl1:
-    st.markdown(f"<small style='color:gray;'>ACTIVE STUDIO:</small><br><b>{final_query}</b>", unsafe_allow_html=True)
-with ctrl2:
-    shuffle = st.toggle("🔀 SUFFER")
-with ctrl3:
-    auto_loop = st.toggle("🔁 AUTO-LOOP", value=True)
+h_col, s_col = st.columns([3, 1])
+with h_col:
+    st.markdown(f"#### 🎵 Active: <span style='color:#1DB954;'>{active_query}</span>", unsafe_allow_html=True)
+with s_col:
+    shuffle = st.toggle("Suffer Mode")
 
-# --- 5. MUSIC ENGINE ---
-ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'no_warnings': True, 'ignoreerrors': True, 'default_search': 'ytsearch15', 'noplaylist': True}
+# --- Fetching Logic ---
+ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'no_warnings': True, 'ignoreerrors': True, 'default_search': 'ytsearch20', 'noplaylist': True}
 
 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
     try:
-        if final_query != st.session_state['last_fetched']:
-            with st.spinner('SYNCING STUDIO...'):
-                data = ydl.extract_info(final_query, download=False)
-                st.session_state['playlist'] = [e for e in data['entries'] if e is not None]
-                st.session_state['last_fetched'] = final_query
+        if active_query != st.session_state.get('last_q'):
+            with st.spinner('✨ Creating your playlist...'):
+                data = ydl.extract_info(active_query, download=False)
+                st.session_state['playlist'] = [entry for entry in data['entries'] if entry is not None]
+                st.session_state['last_q'] = active_query
 
-        for song in st.session_state['playlist']:
-            if shuffle: random.shuffle(st.session_state['playlist'])
-            
-            st.markdown(f"""
-                <div class="song-card">
-                    <img src="{song.get('thumbnail')}" style="width:65px; height:65px; border-radius:12px; border:1px solid #00ff7f;">
-                    <div style="flex-grow:1;">
-                        <b style="font-size:15px; color:#fff;">{song.get('title')[:55]}</b><br>
-                        <small style="color:#00ff7f;">{song.get('uploader')}</small>
+        current_list = list(st.session_state['playlist'])
+        if shuffle: random.shuffle(current_list)
+
+        for song in current_list:
+            with st.container():
+                st.markdown(f"""
+                    <div class="song-card">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img src="{song.get('thumbnail')}" style="width:60px; height:60px; border-radius:12px; object-fit:cover; border: 1px solid #1DB954;">
+                            <div style="flex-grow: 1;">
+                                <b style="font-size:16px; color:#fff;">{song.get('title')[:60]}</b><br>
+                                <small style="color:#1DB954;">{song.get('uploader')}</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            """, unsafe_allow_html=True)
-            st.audio(song.get('url'), format='audio/mp3', loop=auto_loop)
+                """, unsafe_allow_html=True)
+                st.audio(song.get('url'), format='audio/mp3', loop=True)
 
     except Exception:
-        st.error("SYNC FAILED! REFRESH.")
+        st.error("Network issue, please try again.")
 
-st.markdown("<br><center><small style='color:#333;'>AJ BEATS STUDIO v10.0 • NO ADS</small></center>", unsafe_allow_html=True)
+# --- Modern Footer ---
+st.markdown(f"""
+    <div style="background: rgba(29, 185, 84, 0.1); padding: 30px; border-radius: 20px; margin-top: 50px; text-align: center; border: 1px solid #1DB954;">
+        <h3 style="color:#1DB954; margin:0;">AJ PRO PLAYER v5.0</h3>
+        <p style="color:#777; font-size:12px;">Premium Ad-Free Experience • Auto-Loop Enabled • Developed by Aj</p>
+    </div><br>
+    """, unsafe_allow_html=True)
