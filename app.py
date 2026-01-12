@@ -1,17 +1,13 @@
 import streamlit as st
 import yt_dlp
 import random
-import logging
 
-# 1. Technical Cleanup: Errors ko chupane ke liye
-logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.ERROR)
-
+# Page config
 st.set_page_config(page_title="Aj Beats Studio", layout="wide", initial_sidebar_state="collapsed")
 
-# 🎨 DITTO UI: Pattern, Colors, and Buttons
+# 🎨 DITTO UI: Exact Grid Pattern & Neon Glass Layout
 st.markdown("""
     <style>
-    /* Exact Circuit Grid Background */
     .stApp { 
         background-color: #0b0b15;
         background-image: 
@@ -20,131 +16,112 @@ st.markdown("""
         background-size: 35px 35px, 35px 35px;
         color: white; 
     }
-    
-    /* Search Bar - White Glass (Top) */
     .stTextInput > div > div > input {
         background: rgba(255, 255, 255, 0.95) !important;
         color: #111 !important;
         border-radius: 8px !important;
         font-weight: bold !important;
-        border: none !important;
     }
-
-    /* Mood Buttons - Neon Grid with Green Bottom */
     div.stButton > button {
         background: rgba(20, 20, 40, 0.9) !important;
         color: white !important;
         border: 1px solid rgba(138, 43, 226, 0.6) !important;
         border-radius: 12px !important;
-        height: 60px !important;
+        height: 65px !important;
         width: 100% !important;
         border-bottom: 4px solid #00ff7f !important;
-        text-transform: uppercase;
         font-weight: 800 !important;
     }
-
-    /* Song Card Design - Rounded Glass */
-    .song-box { 
-        background: rgba(255, 255, 255, 0.07);
+    .song-card { 
+        background: rgba(255, 255, 255, 0.06);
         backdrop-filter: blur(12px);
         padding: 15px; 
-        border-radius: 18px; 
+        border-radius: 20px; 
         border: 1px solid rgba(255, 255, 255, 0.1);
         margin-top: 15px;
     }
-    
-    .neon-label { 
-        color: #00ff7f; 
-        font-weight: 900; 
-        border-left: 5px solid #00ff7f;
-        padding-left: 12px;
-        margin: 25px 0 10px 0;
-    }
-
     audio { width: 100%; filter: invert(100%) hue-rotate(85deg) brightness(1.7); margin-top: 10px; }
     #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# Session State for Search Persistence
+# --- State Management ---
 if 'playlist' not in st.session_state: st.session_state.playlist = []
-if 'last_q' not in st.session_state: st.session_state.last_q = ""
+if 'search_query' not in st.session_state: st.session_state.search_query = "New Bollywood 2026"
 
-# --- 1. HEADER & SEARCH (Position: Top) ---
-t_col1, t_col2 = st.columns([1, 4])
-with t_col1:
+# 1. Header (Profile Picture)
+t1, t2 = st.columns([1, 4])
+with t1:
     st.markdown('<img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" style="width:75px; height:75px; border-radius:50%; border:3px solid #00ff7f; box-shadow: 0 0 15px #00ff7f; object-fit: cover;">', unsafe_allow_html=True)
-with t_col2:
-    st.markdown("<h2 style='margin:0;'>AJ BEATS STUDIO</h2><small style='color:#00ff7f;'>DISCOVER SOUNDSPHERES</small>", unsafe_allow_html=True)
+with t2:
+    st.markdown("<h2 style='margin:0;'>Aj BEATs Studio</h2><small style='color:#00ff7f;'>THE MUSIC STUDIO</small>", unsafe_allow_html=True)
 
-user_q = st.text_input("", placeholder="🔍 Search songs, artists or playlists...", key="top_search")
+# 2. Search Bar (TOP - Working Fix)
+search_input = st.text_input("", placeholder="🔍 Search songs, artists or playlists...", key="main_search")
+if search_input and search_input != st.session_state.search_query:
+    st.session_state.search_query = search_input
+    st.session_state.playlist = [] # Clear old results
 
-# --- 2. MOOD GRID ---
-st.markdown("<div class='neon-label'>Discover Soundspheres 🔥</div>", unsafe_allow_html=True)
+# 3. Discover Moods (Grid Layout)
+st.markdown("<h4 style='color: #00ff7f; border-left: 5px solid #00ff7f; padding-left: 10px;'>DISCOVER SOUNDSPHERES 🔥</h4>", unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 m3, m4 = st.columns(2)
-mood = ""
 
-with m1:
-    if st.button("🚜 HARYANI TECHAN"): mood = "Latest Haryanvi Songs 2026"
-with m2:
-    if st.button("📻 OLD GOLD HITS"): mood = "90s Bollywood Evergreen"
-with m3:
-    if st.button("🕺 PUNJABI BEATS"): mood = "Top Punjabi Songs 2026"
-with m4:
-    if st.button("🌌 NEON PUNJABI"): mood = "New Punjabi Remix 2026"
+mood_q = ""
+with m1: 
+    if st.button("🚜 HARYANI TECHAN"): mood_q = "Latest Haryanvi 2026"
+with m2: 
+    if st.button("📻 OLD GOLD HITS"): mood_q = "90s Bollywood Hits"
+with m3: 
+    if st.button("🕺 PUNJABI BEATS"): mood_q = "Top Punjabi 2026"
+with m4: 
+    if st.button("🌌 NEON PUNJABI"): mood_q = "New Punjabi Remix"
 
-# Priority logic for Search
-final_q = mood if mood else (user_q if user_q else "Trending Bollywood 2026")
+if mood_q:
+    st.session_state.search_query = mood_q
+    st.session_state.playlist = []
+    st.rerun()
 
-# --- 3. FETCH MUSIC ---
-if final_q != st.session_state.last_q:
+# 4. Fetch Music Engine
+if not st.session_state.playlist:
     ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'default_search': 'ytsearch15', 'noplaylist': True}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            with st.spinner('Syncing Studio...'):
-                data = ydl.extract_info(final_q, download=False)
-                st.session_state.playlist = [e for e in data['entries'] if e is not None]
-                st.session_state.last_q = final_q
-        except:
-            st.error("Connection Error! Refresh Karo.")
+            with st.spinner('Syncing...'):
+                info = ydl.extract_info(st.session_state.search_query, download=False)
+                st.session_state.playlist = [e for e in info['entries'] if e is not None]
+        except: st.error("Sync Error! Refresh please.")
 
-# --- 4. CONTROLS (Suffer & Fetch) ---
+# 5. Global Controls (Suffer & Fetch)
 st.write("---")
-c_suf, c_fch = st.columns([1, 1])
-with c_suf:
-    shuffle_on = st.toggle("🔀 SUFFER Mode")
-with c_fch:
+c1, c2, c3 = st.columns([2, 1, 1])
+with c1: st.markdown(f"<b>ACTIVE: {st.session_state.search_query}</b>", unsafe_allow_html=True)
+with c2: shuffle_on = st.toggle("🔀 SUFFER Mode")
+with c3: 
     if st.button("🚀 FETCH NOW"):
-        st.session_state.last_q = "" # Reset to force fetch
+        st.session_state.playlist = []
         st.rerun()
 
-# --- 5. INDIVIDUAL PLAYER ENGINE ---
-st.markdown("<div class='neon-label'>Active Playlist 🎧</div>", unsafe_allow_html=True)
+# 6. Song Display (Individual Loop Fix)
+display_songs = list(st.session_state.playlist)
+if shuffle_on: random.shuffle(display_songs)
 
-songs = list(st.session_state.playlist)
-if shuffle_on:
-    random.shuffle(songs)
-
-for song in songs:
+for song in display_songs:
     with st.container():
-        # Song Card ditto image jaisa
         st.markdown(f"""
-            <div class="song-box">
+            <div class="song-card">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <img src="{song.get('thumbnail')}" style="width:65px; height:65px; border-radius:12px; border:1px solid #00ff7f; object-fit:cover;">
                     <div style="flex-grow:1;">
-                        <b style="font-size:16px; color:#fff;">{song.get('title')[:60]}</b><br>
+                        <b style="font-size:16px;">{song.get('title')[:60]}</b><br>
                         <small style="color:#00ff7f;">{song.get('uploader')}</small>
                     </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
-        # 🔥 INDIVIDUAL LOOP SWITCH (Har song pe alag)
+        # 🔥 Individual Loop Switch (As per Image)
         loop_this = st.toggle(f"AUTO-LOOP Enabled", value=True, key=f"lp_{song.get('id')}")
-        
-        # Audio Player
         st.audio(song.get('url'), format='audio/mp3', loop=loop_this)
 
-st.markdown("<br><center><small style='color:#333;'>AJ BEATS STUDIO v120.0 • No Overlap Fix</small></center>", unsafe_allow_html=True)
+st.markdown("<br><center><small style='color:#333;'>AJ BEATS STUDIO v150.0 • No More Multi-Play</small></center>", unsafe_allow_html=True)
