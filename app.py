@@ -1,94 +1,140 @@
 import streamlit as st
 import yt_dlp
-import streamlit.components.v1 as components
+import random
 
-# Page Config
-st.set_page_config(page_title="Aj Music Pro", layout="wide")
+# 1. Page Configuration - PC aur Mobile dono ke liye layout set kiya hai
+st.set_page_config(page_title="Aj Music Pro", layout="wide", initial_sidebar_state="collapsed")
 
-# Force JavaScript to handle audio pause (This will run in the browser background)
-components.html(
-    """
-    <script>
-    const interval = setInterval(() => {
-        const audios = window.parent.document.querySelectorAll('audio');
-        audios.forEach(audio => {
-            if (!audio.dataset.listener) {
-                audio.dataset.listener = "true";
-                audio.addEventListener('play', (event) => {
-                    audios.forEach(a => {
-                        if (a !== event.target) {
-                            a.pause();
-                        }
-                    });
-                });
-            }
-        });
-    }, 1000);
-    </script>
-    """,
-    height=0,
-)
-
-# Advanced CSS for Spotify Feel
+# 2. Custom CSS - Spotify Style Dark Theme aur Responsive Design
 st.markdown("""
     <style>
-    .stApp { background-color: #121212; color: white; }
-    .profile-img { border-radius: 50%; width: 120px; height: 120px; border: 3px solid #1DB954; box-shadow: 0 4px 20px rgba(29, 185, 84, 0.5); }
-    .stButton>button { border-radius: 20px; background-color: #282828; color: white; border: 1px solid #1DB954; transition: 0.3s; width: 100%; }
-    .stButton>button:hover { background-color: #1DB954; color: black; }
-    .download-btn { background-color: #1DB954; color: white !important; padding: 8px 15px; text-decoration: none; border-radius: 20px; font-size: 14px; font-weight: bold; display: inline-block; margin-top: 10px; }
-    audio { filter: invert(100%) hue-rotate(180deg) brightness(1.5); width: 100%; }
+    .stApp { background-color: #0c0c0c; color: white; }
+    
+    /* Sticky Header: Search aur Profile upar fixed rahenge */
+    .header-box {
+        position: sticky;
+        top: 0;
+        background-color: #0c0c0c;
+        z-index: 99;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #1f1f1f;
+    }
+
+    .profile-img { 
+        border-radius: 50%; 
+        width: 110px; height: 110px; 
+        border: 3px solid #1DB954;
+        object-fit: cover;
+        box-shadow: 0 0 15px rgba(29, 185, 84, 0.4);
+    }
+
+    /* Song Cards: PC par Grid (2 columns), Mobile par List */
+    .song-card {
+        background: #181818;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #282828;
+        margin-top: 15px;
+        transition: 0.3s;
+    }
+    .song-card:hover { border-color: #1DB954; }
+
+    /* Audio Player Styling */
+    audio { 
+        width: 100%; 
+        height: 40px;
+        filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+        margin-top: 10px;
+    }
+
+    /* Mobile Text Adjustment */
+    @media (max-width: 600px) {
+        .song-title { font-size: 14px !important; }
+        .profile-img { width: 90px; height: 90px; }
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- Header ---
-c1, c2, c3 = st.columns([1,1,1])
+# --- Sticky Header Section ---
+st.markdown('<div class="header-box">', unsafe_allow_html=True)
+c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
-    st.markdown(f'<center><img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" class="profile-img"></center>', unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align: center;'>Aj Pro Player</h2>", unsafe_allow_html=True)
+    # Aapki Profile Photo aur Naam
+    st.markdown(f'<center><img src="https://i.postimg.cc/rpd79wYM/IMG-20220517-WA0009.jpg" class="profile-img"><h1 style="color:#1DB954; margin-top:10px; font-family:sans-serif;">Aj Pro Player</h1></center>', unsafe_allow_html=True)
 
-st.write("---")
+# Search aur Shuffle Controls
+col_search, col_shuffle = st.columns([4, 1])
+with col_search:
+    query = st.text_input("", placeholder="🔍 Singer, Gaana ya Playlist search karein...")
+with col_shuffle:
+    st.write("<div style='height:15px;'></div>", unsafe_allow_html=True) # Mobile spacing
+    shuffle_on = st.toggle("🔀 Shuffle")
+st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Mood Shortcuts ---
-st.subheader("Explore Moods")
-m1, m2, m3, m4 = st.columns(4)
-mood_search = ""
-if m1.button("🔥 Party Hits"): mood_search = "Latest Punjabi Party Songs"
-if m2.button("🎸 Sad Vibes"): mood_search = "Hindi Sad Songs"
-if m3.button("💪 Gym Beast"): mood_search = "Punjabi Gym Workout Songs"
-if m4.button("🌙 Relaxing"): mood_search = "Lo-fi Hindi Chill"
-
-# --- Search Bar ---
-user_query = st.text_input("", placeholder="Gaana ya Singer ka naam likhein...", value=mood_search)
-
-# Function to fetch and display songs
-def display_songs(query):
+# --- Music Logic Section ---
+if query:
+    # 20 gaane fetch karne ke liye settings
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
-        'default_search': 'ytsearch8',
-        'noplaylist': True
+        'default_search': 'ytsearch20', 
+        'noplaylist': True,
+        'nocheckcertificate': True,
+        'proxy': '' # Glitch avoid karne ke liye
     }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            results = ydl.extract_info(query, download=False)['entries']
-            for song in results:
-                with st.container():
-                    col_thumb, col_play = st.columns([1, 4])
-                    with col_thumb:
-                        st.image(song.get('thumbnail'), use_container_width=True)
-                    with col_play:
-                        title = song.get('title')
-                        audio_url = song.get('url')
-                        st.markdown(f"**{title}**")
-                        st.markdown(f"<small style='color:gray'>{song.get('uploader')}</small>", unsafe_allow_html=True)
-                        st.audio(audio_url)
-                        st.markdown(f'<a href="{audio_url}" download="{title}.mp3" class="download-btn">📥 Download MP3</a>', unsafe_allow_html=True)
-                    st.markdown("<hr style='border: 0.1px solid #333'>", unsafe_allow_html=True)
-        except:
-            st.error("Kuch problem aa rahi hai. Page refresh karke dekhein.")
+            with st.spinner('🎵 Aapki Super Playlist ready ho rahi hai...'):
+                info = ydl.extract_info(query, download=False)
+                results = info['entries']
+            
+            if shuffle_on:
+                random.shuffle(results)
 
-if user_query:
-    display_songs(user_query)
+            # PC par 2 columns, Mobile par auto 1 column (Responsive Grid)
+            for i in range(0, len(results), 2):
+                cols = st.columns(2)
+                for j in range(2):
+                    if i + j < len(results):
+                        song = results[i + j]
+                        with cols[j]:
+                            st.markdown(f"""
+                                <div class="song-card">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <img src="{song.get('thumbnail')}" style="width:55px; height:55px; border-radius:8px; object-fit:cover;">
+                                        <div style="line-height: 1.3;">
+                                            <b class="song-title" style="color:#fff; font-size:15px;">{song.get('title')[:55]}...</b><br>
+                                            <small style="color:#b3b3b3;">{song.get('uploader')} • {song.get('duration_string')}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            # Direct Audio Player (No YouTube Redirect)
+                            st.audio(song.get('url'), format='audio/mp3')
+
+        except Exception as e:
+            st.error("Glich Alert! Shayad YouTube server ne block kiya ya internet slow hai. 1-2 minute baad try karein.")
 else:
-    st.info("Gaana search karein aur enjoy karein!")
+    # Jab search khali ho tab ye dikhega
+    st.markdown("""
+        <div style="text-align: center; margin-top: 80px; color: #444;">
+            <h3>🎧 Welcome to your Personal Ad-Free Player</h3>
+            <p>Upar search box mein kisi bhi Singer ka naam likhein (e.g. Arijit Singh)</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+# --- Professional Footer (Spotify Style) ---
+st.markdown("""
+    <div style="background-color: #121212; padding: 25px; border-radius: 20px; margin-top: 60px; border-top: 2px solid #1DB954; text-align: center;">
+        <h4 style="color: #1DB954; margin-bottom: 5px; font-family: sans-serif;">Aj Pro Player v3.5</h4>
+        <p style="color: #b3b3b3; font-size: 14px;">
+            Designed & Developed by <b>Aniruddh Singh (Aj)</b><br>
+            Enjoy 20+ hits with <b>Suffer Mode</b> (Shuffle) & Zero Ads.
+        </p>
+        <div style="font-size: 11px; color: #555; letter-spacing: 1px;">
+            TIP: USE CHROME BROWSER FOR BEST EXPERIENCE
+        </div>
+    </div>
+    <br>
+    """, unsafe_allow_html=True)
